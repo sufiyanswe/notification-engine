@@ -10,7 +10,7 @@
     </parent>
     <groupId>com.portfolio</groupId>
     <artifactId>notification-engine</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.1.0-SNAPSHOT</version>
     <name>notification-engine</name>
     <description>Production-grade asynchronous notification delivery engine built with Spring Boot.</description>
     <url/>

@@ -1,4 +1,4 @@
-package com.portfolio.notification.config;
+package com.portfolio.notification.infrastructure.configuration;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,10 +11,8 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http.authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/v1/system/**")
-                .permitAll()
-                .anyRequest()
-                .authenticated()
+                .requestMatchers("/api/v1/system/**").permitAll()
+                .anyRequest().authenticated()
         );
 
         return http.build();
