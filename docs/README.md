@@ -1,79 +1,126 @@
-# Documentation
+# Notification Engine
 
-## Purpose
+Backend service for receiving, processing, and delivering notifications across multiple communication channels.
 
-This directory contains all technical documentation for the Notification Engine project.
+> **Project Status:** 🚧 Under Active Development
 
-The documentation is organized by responsibility so engineers can quickly locate architectural decisions, system design, and supporting diagrams.
+Notification Engine is being developed as a production-oriented Spring Boot backend application. The project focuses on clean architecture, maintainability, and incremental feature delivery while following established software engineering practices.
 
 ---
 
-## Directory Structure
+## Current Progress
 
+### Completed
+
+- Spring Boot project bootstrap
+- Layered project architecture
+- Spring Security configuration
+- Externalized application configuration
+- System Information REST endpoint
+- PostgreSQL integration
+
+### In Progress
+
+- Notification domain model
+- Persistence layer
+- Notification REST API
+
+---
+
+## Architecture
+
+The project follows a layered architecture.
+
+```text
+API
+ │
+ ▼
+Application
+ │
+ ▼
+Domain
+ │
+ ▼
+Infrastructure
 ```
+
+Further architectural documentation is available in the `docs/` directory.
+
+---
+
+## Technology Stack
+
+| Category | Technology |
+|----------|------------|
+| Language | Java 25 |
+| Framework | Spring Boot 3.5 |
+| Security | Spring Security |
+| Persistence | Spring Data JPA |
+| Database | PostgreSQL |
+| Build Tool | Maven |
+
+---
+
+## Running the Application
+
+### Prerequisites
+
+- Java 25
+- Maven
+- PostgreSQL
+
+### Start
+
+```bash
+./mvnw spring-boot:run
+```
+
+The application starts on:
+
+```text
+http://localhost:8080
+```
+
+Verify the application:
+
+```http
+GET /api/v1/system/info
+```
+
+---
+
+## Documentation
+
+Project documentation is maintained under the `docs/` directory.
+
+```text
 docs/
 ├── adr/
 ├── architecture/
-├── diagrams/
+└── diagrams/
 ```
 
-### adr/
+---
 
-Architecture Decision Records (ADRs).
+## Development
 
-Each ADR documents an important engineering decision, including:
+The project is being developed incrementally.
 
-- Context
-- Problem
-- Decision
-- Alternatives Considered
-- Consequences
+Upcoming milestones include:
+
+- Notification entity
+- Database persistence
+- REST API
+- Validation
+- Exception handling
+- Email delivery
+- SMS delivery
+- Retry mechanism
+- Scheduling
+- Asynchronous processing
 
 ---
 
-### architecture/
+## License
 
-Contains documents describing the overall architecture of the system.
-
-Examples include:
-
-- Request Lifecycle
-- Security Architecture
-- Package Structure
-- Notification Flow
-
----
-
-### diagrams/
-
-Contains all architecture diagrams used throughout the project.
-
-Examples:
-
-- Request Lifecycle
-- Security Filter Chain
-- Package Structure
-- Entity Relationship Diagram
-
----
-
-## Documentation Principles
-
-This repository follows these documentation principles:
-
-- Documentation evolves together with the code.
-- Architecture decisions are recorded using ADRs.
-- Diagrams are stored separately from explanatory documents.
-- Documentation describes the system, not the learning process.
-
----
-
-## Contributing
-
-Whenever a significant architectural decision is made:
-
-1. Update the relevant architecture document.
-2. Create or update an ADR if required.
-3. Keep diagrams synchronized with implementation.
-
-Documentation is treated as part of the software rather than an afterthought.
+This repository currently does not specify a license.
