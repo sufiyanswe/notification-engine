@@ -2,56 +2,125 @@
 
 ## Overview
 
-Notification Engine follows a layered architecture that separates HTTP concerns, application use cases, business concepts, and infrastructure.
+Notification Engine follows a layered architecture while selectively applying the Ports and Adapters (Hexagonal Architecture) pattern for integrating external systems.
 
-The primary objective of this architecture is to keep responsibilities isolated, reduce coupling between components, and allow the system to evolve without forcing unrelated parts of the codebase to change.
+The architecture separates HTTP concerns, application use cases, business rules, and infrastructure implementations. Business logic remains independent of external technologies, allowing infrastructure components to evolve without impacting the core application.
+
+The primary objectives of this architecture are:
+
+- Clear separation of responsibilities
+- Low coupling between layers
+- High cohesion within components
+- Replaceable infrastructure
+- Extensible integration points
+- Testable business logic
+- Incremental system evolution
 
 ---
 
 # Architectural Goals
 
-The architecture is designed around the following goals:
+The architecture is designed around the following principles:
 
 - Clear separation of concerns
-- Maintainable codebase
 - Explicit dependency direction
 - Replaceable infrastructure
+- Extensible integrations
+- Maintainable codebase
 - Testable business logic
-- Incremental feature development
+- Consistent package organization
 
-Every new feature introduced into the project should preserve these goals.
+Every new feature introduced into the project should preserve these principles.
 
 ---
 
-# Layer Overview
+# High-Level Architecture
 
 ```
                     HTTP Request
                           │
                           ▼
-                   API Layer
+                    API Layer
                           │
                           ▼
-              Application Layer
-                          │
-                          ▼
-                 Domain Layer
-                          │
-                          ▼
-             Infrastructure Layer
+               Application Layer
+                  │              │
+                  ▼              ▼
+             Domain Layer   Infrastructure Layer
+                  │              │
+                  └──────┬───────┘
+                         ▼
+                    PostgreSQL
 ```
 
-Dependencies always point downward.
+The API layer coordinates client communication.
 
-No layer should depend on a higher layer.
+The Application layer orchestrates business workflows.
+
+The Domain layer represents business concepts and business rules.
+
+The Infrastructure layer provides technology-specific implementations.
+
+---
+
+# Architectural Patterns
+
+The project combines multiple architectural styles where appropriate.
+
+## Layered Architecture
+
+The application is organized into distinct layers:
+
+- API
+- Application
+- Domain
+- Infrastructure
+
+Each layer has a clearly defined responsibility.
+
+---
+
+## Ports and Adapters (Hexagonal Architecture)
+
+External integrations are implemented using the Ports and Adapters pattern.
+
+The application depends on abstractions rather than concrete implementations.
+
+For notification delivery:
+
+```
+NotificationService
+        │
+        ▼
+NotificationChannel
+        │
+        ▼
+NotificationChannelResolver
+        │
+ ┌──────┼───────────────┐
+ ▼      ▼               ▼
+Email   SMS           Push
+```
+
+Adding a new delivery channel requires implementing the `NotificationChannel` contract.
+
+Existing business logic remains unchanged.
+
+---
+
+## Repository Pattern
+
+Persistence is accessed through repository abstractions.
+
+Application services interact with repositories rather than persistence technologies directly.
 
 ---
 
 # Layers
 
-## API
+## API Layer
 
-**Responsibility**
+### Responsibility
 
 Expose HTTP endpoints and translate HTTP requests into application use cases.
 
@@ -61,7 +130,7 @@ Contains:
 - Request models
 - Response models
 
-The API layer should never contain business logic.
+The API layer contains no business logic.
 
 Current package:
 
@@ -71,18 +140,20 @@ api/
 
 ---
 
-## Application
+## Application Layer
 
-**Responsibility**
+### Responsibility
 
-Execute application use cases.
+Coordinate business workflows.
 
-Application services coordinate work between the domain model and infrastructure without exposing HTTP or persistence concerns.
+Application services orchestrate domain objects and infrastructure components while remaining independent of HTTP concerns.
 
-Contains:
+Typical responsibilities include:
 
-- Application services
-- Use case orchestration
+- Executing use cases
+- Coordinating persistence
+- Delegating external integrations
+- Managing transactional boundaries
 
 Current package:
 
@@ -92,19 +163,23 @@ application/
 
 ---
 
-## Domain
+## Domain Layer
 
-**Responsibility**
+### Responsibility
 
 Represent the core business concepts of the Notification Engine.
 
-The domain should remain independent from Spring Framework and infrastructure technologies whenever practical.
+The domain contains business rules and business state.
+
+The domain should remain independent from Spring Framework whenever practical.
 
 Contains:
 
-- Domain models
-- Domain abstractions
-- Repository interfaces
+- Domain entities
+- Domain value objects
+- Domain enums
+- Domain ports
+- Repository abstractions
 
 Current package:
 
@@ -114,21 +189,19 @@ domain/
 
 ---
 
-## Infrastructure
+## Infrastructure Layer
 
-**Responsibility**
+### Responsibility
 
-Provide technical capabilities required by the application.
-
-Infrastructure implements communication with external systems.
+Provide technology-specific implementations required by the application.
 
 Examples include:
 
-- Database access
-- Configuration
-- Messaging
-- Email providers
-- External APIs
+- Spring Data repositories
+- Notification delivery adapters
+- Delivery channel resolution
+- Security configuration
+- External integrations
 
 Current package:
 
@@ -140,16 +213,15 @@ infrastructure/
 
 # Dependency Rules
 
-The project follows the following dependency direction.
+Dependencies should always point toward business logic.
 
 ```
 API
-    ↓
+    │
+    ▼
 Application
-    ↓
-Domain
-    ↓
-Infrastructure
+   ↙     ↘
+Domain  Infrastructure
 ```
 
 Allowed dependencies:
@@ -163,6 +235,7 @@ The following dependencies are not allowed:
 
 - Domain → Spring MVC
 - Domain → Controllers
+- Domain → Spring Data
 - API → Database
 - Controllers → Repositories
 - Infrastructure → Controllers
@@ -171,58 +244,67 @@ The following dependencies are not allowed:
 
 # Current Implementation
 
-As of the current milestone, the architecture includes:
-
 ```
 NotificationEngineApplication
 
 API
- ├── SystemInfoController
- └── SystemInfoResponse
+ └── NotificationController
 
 Application
- └── SystemInfoService
-
-Infrastructure
- ├── SecurityConfig
- └── ApplicationProperties
+ └── NotificationService
 
 Domain
- └── (Reserved for notification model)
-```
+ ├── Notification
+ ├── NotificationStatus
+ ├── NotificationChannelType
+ ├── DeliveryResult
+ ├── NotificationChannel
+ └── NotificationRepository
 
-The System Information endpoint demonstrates the complete request lifecycle while validating the layered architecture.
+Infrastructure
+ ├── NotificationChannelResolver
+ ├── EmailNotificationChannel
+ ├── SmsNotificationChannel
+ ├── PushNotificationChannel
+ ├── NotificationRepository (Spring Data)
+ ├── SecurityConfig
+ └── ApplicationProperties
+```
 
 ---
 
 # Design Principles
 
-The project currently follows these principles:
+The project currently applies the following engineering principles:
 
+- Layered Architecture
+- Ports and Adapters (Hexagonal Architecture)
+- Repository Pattern
 - Single Responsibility Principle
+- Open/Closed Principle
+- Dependency Inversion Principle
 - Constructor-based Dependency Injection
 - Thin Controllers
-- Immutable Response Models
-- Externalized Configuration
+- Rich Domain Model
 - Explicit Package Organization
-- Layered Architecture
 
-These principles should be preserved as the project evolves.
+These principles should remain consistent as the project evolves.
 
 ---
 
 # Future Evolution
 
-The architecture is intentionally designed to support future additions without requiring structural changes.
+The current architecture is intentionally designed to support future capabilities without significant structural changes.
 
-Planned additions include:
+Planned areas of evolution include:
 
-- Notification domain model
-- Repository implementations
-- Email provider integration
-- SMS provider integration
+- Real Email provider integration
+- SMS gateway integration
+- Push notification provider integration
 - Retry mechanism
-- Scheduling
+- Scheduled delivery
 - Asynchronous processing
-- Monitoring
-- Metrics
+- Outbox Pattern
+- Monitoring and metrics
+- Distributed tracing
+- Event-driven integrations

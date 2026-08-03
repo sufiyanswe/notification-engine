@@ -1,73 +1,125 @@
 # Notification Engine
 
-Backend service for receiving, processing, and delivering notifications across multiple communication channels.
+A production-oriented backend service built with Spring Boot that manages and delivers notifications through multiple delivery channels.
 
-> **Project Status:** 🚧 Under Active Development
-
-Notification Engine is being developed as a production-oriented Spring Boot backend application. The project focuses on clean architecture, maintainability, and incremental feature delivery while following established software engineering practices.
+The project is designed as an engineering portfolio focused on backend architecture, clean code, and scalable system design rather than simply demonstrating framework features.
 
 ---
 
-## Current Progress
+## Project Goals
 
-### Completed
+The Notification Engine is built to explore how production backend systems evolve over time.
 
-- Spring Boot project bootstrap
-- Layered project architecture
-- Spring Security configuration
-- Externalized application configuration
-- System Information REST endpoint
-- PostgreSQL integration
+The project emphasizes:
 
-### In Progress
-
-- Notification domain model
-- Persistence layer
-- Notification REST API
+- Clean Architecture
+- Layered Design
+- Ports and Adapters (Hexagonal Architecture)
+- Domain-Driven Design principles
+- Extensible notification delivery
+- Production-ready engineering practices
 
 ---
 
-## Architecture
+## Current Features
 
-The project follows a layered architecture.
+### Notification Management
 
-```text
-API
- │
- ▼
-Application
- │
- ▼
-Domain
- │
- ▼
-Infrastructure
-```
+- Create notifications
+- Persist notifications
+- Track notification status
+- UUID-based identifiers
 
-Further architectural documentation is available in the `docs/` directory.
+### Notification Delivery
+
+- Email notifications
+- SMS notifications
+- Push notifications
+
+Delivery channels are resolved dynamically through the `NotificationChannel` abstraction without modifying application services.
+
+### Validation
+
+- Bean Validation
+- Request validation
+- Enum validation
+- Domain state validation
+
+### Persistence
+
+- PostgreSQL
+- Spring Data JPA
+- Hibernate
+- Flyway migrations
+- Hibernate Dirty Checking
 
 ---
 
 ## Technology Stack
 
-| Category | Technology |
-|----------|------------|
-| Language | Java 25 |
-| Framework | Spring Boot 3.5 |
-| Security | Spring Security |
-| Persistence | Spring Data JPA |
-| Database | PostgreSQL |
-| Build Tool | Maven |
+### Backend
+
+- Java 25
+- Spring Boot
+- Spring MVC
+- Spring Data JPA
+- Hibernate
+- Flyway
+
+### Database
+
+- PostgreSQL
+
+### Build
+
+- Maven
 
 ---
 
-## Running the Application
+## Architecture
 
-### Prerequisites
+The project follows a layered architecture while applying the Ports and Adapters (Hexagonal Architecture) pattern for notification delivery.
+
+```
+Client
+    │
+    ▼
+Controller
+    │
+    ▼
+Application Service
+   ↙        ↘
+Domain   Infrastructure
+```
+
+Detailed documentation:
+
+- Architecture → `docs/architecture/architecture.md`
+- ADRs → `docs/adr/`
+- Request Flow → `docs/diagrams/request-flow.md`
+
+---
+
+## Project Structure
+
+```
+src/main/java/com/portfolio/notification
+
+├── api
+├── application
+├── domain
+└── infrastructure
+```
+
+---
+
+## Running the Project
+
+### Requirements
 
 - Java 25
-- Maven
 - PostgreSQL
+- Maven
 
 ### Start
 
@@ -75,52 +127,60 @@ Further architectural documentation is available in the `docs/` directory.
 ./mvnw spring-boot:run
 ```
 
-The application starts on:
+---
 
-```text
-http://localhost:8080
-```
+## Database
 
-Verify the application:
+Flyway manages the database schema automatically during application startup.
 
-```http
-GET /api/v1/system/info
-```
+---
+
+## Current Status
+
+Current Version:
+
+**v0.2.0**
+
+Implemented:
+
+- Layered Architecture
+- Notification Domain
+- Notification Delivery Pipeline
+- Email Adapter
+- SMS Adapter
+- Push Adapter
+- Resolver Pattern
+- Transaction Management
+- Hibernate Dirty Checking
+
+---
+
+## Roadmap
+
+Planned features include:
+
+- Retry mechanism
+- Scheduled delivery
+- Authentication & Authorization
+- Asynchronous processing
+- Event-driven notifications
+- Outbox Pattern
+- Monitoring & Metrics
+- Docker
+- CI/CD Pipeline
 
 ---
 
 ## Documentation
 
-Project documentation is maintained under the `docs/` directory.
-
-```text
-docs/
-├── adr/
-├── architecture/
-└── diagrams/
-```
-
----
-
-## Development
-
-The project is being developed incrementally.
-
-Upcoming milestones include:
-
-- Notification entity
-- Database persistence
-- REST API
-- Validation
-- Exception handling
-- Email delivery
-- SMS delivery
-- Retry mechanism
-- Scheduling
-- Asynchronous processing
+| Document | Description |
+|----------|-------------|
+| Architecture | Overall system design |
+| ADR | Architectural decisions |
+| Request Flow | Runtime request lifecycle |
 
 ---
 
 ## License
 
-This repository currently does not specify a license.
+This project is intended for educational and portfolio purposes.

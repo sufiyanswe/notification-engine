@@ -1,13 +1,17 @@
 package com.portfolio.notification.domain.model;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 
 import org.hibernate.annotations.UuidGenerator;
 
 import java.time.Instant;
 import java.util.UUID;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 
 @Entity
 @Table(name = "notifications")
@@ -27,6 +31,10 @@ public class Notification {
     @Column(name = "message", nullable = false)
     private String message;
 
+    @Column(name = "delivery_channel", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private NotificationChannelType deliveryChannel;
+
     @Column(name = "status", nullable = false)
     @Enumerated(EnumType.STRING)
     private NotificationStatus status;
@@ -35,16 +43,19 @@ public class Notification {
     private Instant createdAt;
 
     protected Notification() {
+        // Required by JPA
     }
 
     public Notification(
             String recipientId,
             String title,
-            String message
+            String message,
+            NotificationChannelType deliveryChannel
     ) {
         this.recipientId = recipientId;
         this.title = title;
         this.message = message;
+        this.deliveryChannel = deliveryChannel;
         this.status = NotificationStatus.PENDING;
         this.createdAt = Instant.now();
     }
@@ -65,11 +76,22 @@ public class Notification {
         return message;
     }
 
+    public NotificationChannelType getDeliveryChannel() {
+        return deliveryChannel;
+    }
+
     public NotificationStatus getStatus() {
         return status;
     }
 
     public Instant getCreatedAt() {
         return createdAt;
+    }
+
+    public void markAsSent() {
+        if (status != NotificationStatus.PENDING) {
+            throw new IllegalStateException("Notification can only be marked as SENT from PENDING. Current status: " + status);
+        }
+        status = NotificationStatus.SENT;
     }
 }

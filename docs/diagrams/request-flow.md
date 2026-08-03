@@ -2,235 +2,175 @@
 
 ## Overview
 
-This document describes how an HTTP request flows through the Notification Engine.
+This document describes the runtime execution flow of a notification request through the Notification Engine.
 
-The current implementation uses the `System Information` endpoint to demonstrate the complete request lifecycle.
+The objective is to show how an HTTP request is processed from the API layer to persistence and back to the client.
+
+---
+
+# High-Level Flow
+
+```text
+Client
+    │
+    ▼
+HTTP Request
+    │
+    ▼
+NotificationController
+    │
+    ▼
+Bean Validation
+    │
+    ▼
+NotificationService
+    │
+    ├────────────────────────────┐
+    ▼                            ▼
+NotificationRepository      NotificationChannelResolver
+    │                            │
+    │                            ▼
+    │                    NotificationChannel
+    │                            │
+    │              ┌─────────────┼──────────────┐
+    │              ▼             ▼              ▼
+    │            Email          SMS           Push
+    │
+    ▼
+Hibernate Persistence Context
+    │
+    ▼
+Dirty Checking
+    │
+    ▼
+PostgreSQL
+    │
+    ▼
+NotificationResponse
+    │
+    ▼
+HTTP 201 Created
+```
 
 ---
 
 # Request Lifecycle
 
+## 1. Client Request
+
+The client submits an HTTP POST request to create a notification.
+
+Example endpoint:
+
 ```
-Browser / HTTP Client
-        │
-        ▼
-Tomcat (Embedded Web Server)
-        │
-        ▼
-DispatcherServlet
-        │
-        ▼
-SystemInfoController
-        │
-        ▼
-SystemInfoService
-        │
-        ▼
-ApplicationProperties
-        │
-        ▼
-SystemInfoResponse
-        │
-        ▼
-Jackson
-        │
-        ▼
-HTTP Response (JSON)
+POST /api/v1/notifications
 ```
 
 ---
 
-# Step-by-Step Flow
+## 2. API Layer
 
-## 1. HTTP Request
-
-A client sends an HTTP request.
-
-```http
-GET /api/v1/system/info
-```
-
-The request is received by the embedded Tomcat server.
-
----
-
-## 2. DispatcherServlet
-
-Spring MVC's `DispatcherServlet` receives the request.
+`NotificationController` receives the request.
 
 Responsibilities:
 
-- Match the request URL
-- Locate the appropriate controller
-- Invoke the controller method
+- Deserialize JSON
+- Validate request
+- Invoke the application service
 
-For this request:
-
-```
-GET /api/v1/system/info
-```
-
-Spring routes the request to:
-
-```
-SystemInfoController.info()
-```
+No business logic is executed here.
 
 ---
 
-## 3. Controller
+## 3. Application Layer
+
+`NotificationService` coordinates the complete use case.
+
+Responsibilities:
+
+- Create the notification
+- Persist the notification
+- Resolve the delivery channel
+- Delegate notification delivery
+- Update notification state
+- Return the result
+
+---
+
+## 4. Persistence
+
+The notification is persisted using the repository.
+
+After persistence, the entity becomes managed by Hibernate.
+
+---
+
+## 5. Delivery
+
+The application delegates delivery to the resolver.
+
+The resolver selects the correct implementation based on the notification channel.
+
+Examples:
+
+- EmailNotificationChannel
+- SmsNotificationChannel
+- PushNotificationChannel
+
+---
+
+## 6. Domain State Transition
+
+If delivery succeeds, the notification updates its own state.
 
 ```
-SystemInfoController
-```
-
-Responsibility:
-
-- Receive the HTTP request
-- Delegate work to the application layer
-- Return the response
-
-The controller contains no business logic.
-
-```
-Client
+PENDING
     │
     ▼
-Controller
-    │
-    ▼
-Application Service
+SENT
 ```
+
+The state transition is enforced by the domain model.
 
 ---
 
-## 4. Application Service
+## 7. Transaction Commit
 
-```
-SystemInfoService
-```
+The application transaction completes.
 
-Responsibility:
+Hibernate detects entity changes through Dirty Checking and synchronizes them with the database.
 
-- Execute the "Get System Information" use case
-
-The service retrieves application metadata from:
-
-```
-ApplicationProperties
-```
-
-It then creates:
-
-```
-SystemInfoResponse
-```
+No additional save operation is required after the state transition.
 
 ---
 
-## 5. Configuration
+## 8. Response
 
-```
-ApplicationProperties
-```
+The controller returns a response containing:
 
-Spring binds configuration values from:
-
-```
-application.properties
-```
-
-Example:
-
-```properties
-application.name=notification-engine
-application.version=0.1.0-SNAPSHOT
-```
-
-These values are injected into the service through constructor injection.
-
----
-
-## 6. Response Model
-
-The application service returns an immutable response model.
-
-```
-SystemInfoResponse
-```
-
-The response contains:
-
-- Application name
-- Application version
+- Notification ID
+- Recipient ID
+- Title
+- Message
 - Status
-- Timestamp
+- Creation Timestamp
 
----
+HTTP Status:
 
-## 7. JSON Serialization
-
-Spring Boot automatically uses Jackson to serialize the response object into JSON.
-
-Example response:
-
-```json
-{
-  "application": "notification-engine",
-  "version": "0.1.0-SNAPSHOT",
-  "status": "UP",
-  "timestamp": "2026-07-22T15:27:34.815443400Z"
-}
+```
+201 Created
 ```
 
 ---
 
-## 8. HTTP Response
+# Design Characteristics
 
-The serialized JSON is returned to the client.
+The request flow demonstrates:
 
-The request lifecycle is now complete.
-
----
-
-# Layer Interaction
-
-The request travels through the application using the following dependency chain.
-
-```
-API
-│
-▼
-Application
-│
-▼
-Infrastructure
-```
-
-Current flow:
-
-```
-SystemInfoController
-        │
-        ▼
-SystemInfoService
-        │
-        ▼
-ApplicationProperties
-```
-
-Each layer performs a single responsibility before delegating to the next layer.
-
----
-
-# Engineering Notes
-
-This endpoint intentionally demonstrates the project's architectural rules.
-
-- Controllers remain thin.
-- Business logic resides in the application layer.
-- Configuration is accessed through `ApplicationProperties`.
-- Response models are immutable.
-- Dependencies follow the project's layered architecture.
-
-Future endpoints should follow the same request lifecycle.
+- Thin Controllers
+- Application Service orchestration
+- Rich Domain Model
+- Ports and Adapters
+- Repository Pattern
+- Hibernate Dirty Checking
+- Transactional consistency

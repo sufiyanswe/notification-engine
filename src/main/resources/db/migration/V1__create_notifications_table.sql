@@ -1,15 +1,17 @@
 CREATE TABLE notifications (
 
-        id UUID PRIMARY KEY,
+                               id UUID PRIMARY KEY,
 
-        recipient_id TEXT NOT NULL,
+                               recipient_id TEXT NOT NULL,
 
-        title TEXT,
+                               title TEXT,
 
-        message TEXT NOT NULL,
+                               message TEXT NOT NULL,
 
-        status TEXT NOT NULL,
+                               delivery_channel TEXT NOT NULL,
 
-        created_at TIMESTAMPTZ NOT NULL
+                               status TEXT NOT NULL,
+
+                               created_at TIMESTAMPTZ NOT NULL
 
 );

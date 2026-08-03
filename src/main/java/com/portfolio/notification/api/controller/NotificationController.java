@@ -34,7 +34,8 @@ public class NotificationController {
                 notificationService.createNotification(
                         request.recipientId(),
                         request.title(),
-                        request.message()
+                        request.message(),
+                        request.deliveryChannel()
                 );
 
         NotificationResponse response =
