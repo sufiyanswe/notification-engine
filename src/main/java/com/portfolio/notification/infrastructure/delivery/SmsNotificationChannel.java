@@ -16,9 +16,17 @@ public class SmsNotificationChannel implements NotificationChannel {
 
     @Override
     public DeliveryResult deliver(Notification notification) {
+
+        if ("fail-phone".equals(notification.getRecipientId())) {
+            return new DeliveryResult(
+                    false,
+                    "SMS provider unavailable"
+            );
+        }
+
         return new DeliveryResult(
                 true,
-                "Sms delivered successfully."
+                null
         );
     }
 }

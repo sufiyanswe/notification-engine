@@ -39,6 +39,9 @@ public class Notification {
     @Enumerated(EnumType.STRING)
     private NotificationStatus status;
 
+    @Column(name = "failure_reason")
+    private String failureReason;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
@@ -84,6 +87,10 @@ public class Notification {
         return status;
     }
 
+    public String getFailureReason() {
+        return failureReason;
+    }
+
     public Instant getCreatedAt() {
         return createdAt;
     }
@@ -93,5 +100,23 @@ public class Notification {
             throw new IllegalStateException("Notification can only be marked as SENT from PENDING. Current status: " + status);
         }
         status = NotificationStatus.SENT;
+    }
+
+    public void markAsFailed(String failureReason) {
+
+        if (status != NotificationStatus.PENDING) {
+            throw new IllegalStateException(
+                    "Notification can only be marked as FAILED from PENDING. Current status: " + status
+            );
+        }
+
+        if (failureReason == null || failureReason.isBlank()) {
+            throw new IllegalArgumentException(
+                    "Failure reason must not be blank."
+            );
+        }
+
+        this.status = NotificationStatus.FAILED;
+        this.failureReason = failureReason;
     }
 }

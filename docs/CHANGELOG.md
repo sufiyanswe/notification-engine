@@ -6,7 +6,37 @@ The format is inspired by [Keep a Changelog](https://keepachangelog.com/), and t
 
 ---
 
-## [0.2.0] - 2026-08-03
+## [v0.3.0] - Reliable Delivery
+
+### Added
+
+- FAILED notification lifecycle state.
+- Failure reason persisted for unsuccessful deliveries.
+- Domain behavior for failed delivery (`markAsFailed()`).
+- Flyway migration for `failure_reason`.
+- Delivery simulation for Email, SMS and Push adapters.
+- End-to-end success and failure verification.
+
+### Changed
+
+- NotificationService now handles successful and failed delivery outcomes.
+- DeliveryResult semantics standardized:
+    - success -> reason = null
+    - failure -> reason contains business explanation
+
+### Verified
+
+- Email success
+- Email failure
+- SMS success
+- SMS failure
+- Push success
+- Push failure
+- Resolver behavior
+- Database persistence
+- API responses
+- 
+## [0.2.0] - Delivery Pipeline
 
 ### Added
 
@@ -42,7 +72,7 @@ The format is inspired by [Keep a Changelog](https://keepachangelog.com/), and t
 
 ---
 
-## [0.1.0] - 2026-07-XX
+## [0.1.0] - REST API 
 
 ### Added
 

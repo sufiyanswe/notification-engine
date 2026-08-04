@@ -16,9 +16,17 @@ public class PushNotificationChannel implements NotificationChannel {
 
     @Override
     public DeliveryResult deliver(Notification notification) {
+
+        if ("fail-device".equals(notification.getRecipientId())) {
+            return new DeliveryResult(
+                    false,
+                    "Push provider unavailable"
+            );
+        }
+
         return new DeliveryResult(
                 true,
-                "Push notification delivered successfully."
+                null
         );
     }
 }

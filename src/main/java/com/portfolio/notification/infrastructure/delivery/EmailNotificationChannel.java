@@ -16,9 +16,17 @@ public class EmailNotificationChannel implements NotificationChannel {
 
     @Override
     public DeliveryResult deliver(Notification notification) {
+
+        if ("fail@example.com".equals(notification.getRecipientId())) {
+            return new DeliveryResult(
+                    false,
+                    "SMTP server unavailable"
+            );
+        }
+
         return new DeliveryResult(
                 true,
-                "Email delivered successfully."
+                null
         );
     }
 }

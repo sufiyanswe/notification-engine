@@ -51,6 +51,8 @@ public class NotificationService {
 
         if (result.successful()) {
             notification.markAsSent();
+        } else {
+            notification.markAsFailed(result.reason());
         }
 
         return notification;

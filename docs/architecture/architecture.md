@@ -273,6 +273,36 @@ Infrastructure
 
 ---
 
+# Notification Lifecycle
+
+```
+                +---------+
+                | PENDING |
+                +---------+
+                     |
+         +-----------+-----------+
+         |                       |
+         v                       v
+     +--------+             +---------+
+     |  SENT  |             | FAILED  |
+     +--------+             +---------+
+                                  |
+                                  v
+                    failureReason persisted
+```
+
+A notification is initially created with the `PENDING` status.
+
+The Application layer coordinates the delivery workflow by selecting the appropriate `NotificationChannel` implementation through the `NotificationChannelResolver`.
+
+Each delivery adapter returns a `DeliveryResult`, representing either a successful or failed delivery outcome.
+
+The `Notification` aggregate owns all valid state transitions. Based on the returned `DeliveryResult`, it transitions from `PENDING` to either `SENT` or `FAILED`. When delivery fails, the aggregate persists the associated failure reason as part of its business state.
+
+Infrastructure adapters remain responsible only for interacting with external providers. Provider-specific exceptions and error responses are translated into business-friendly failure reasons before being returned to the application layer, keeping the domain independent of infrastructure concerns.
+
+---
+
 # Design Principles
 
 The project currently applies the following engineering principles:
