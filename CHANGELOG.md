@@ -1,19 +1,57 @@
 # Changelog
 
-All notable changes to this project are documented in this file.
+All notable changes to this project will be documented in this file.
 
-The format is inspired by [Keep a Changelog](https://keepachangelog.com/), and the project follows Semantic Versioning during development.
+The format is based on Keep a Changelog.
 
 ---
 
-## [v0.3.0] - Reliable Delivery
+## [0.4.0] - 2026-08-06
+
+### Added
+
+- Transactional Outbox Pattern
+- OutboxEvent domain aggregate
+- OutboxRepository abstraction
+- Spring Data Outbox repository implementation
+- OutboxEvent database table
+
+### Changed
+
+- Refactored NotificationService to persist Notification and OutboxEvent in a single transaction.
+- Notification creation no longer performs synchronous notification delivery.
+- Notifications remain in the PENDING state after creation.
+
+### Removed
+
+- Synchronous notification delivery from NotificationService.
+- NotificationChannelResolver dependency from NotificationService.
+- DeliveryResult handling from NotificationService.
+
+### Database
+
+- Added outbox_events table.
+- Added foreign key to notifications.
+- Added composite unique constraint.
+- Added composite index for pending-event lookup.
+
+### Verification
+
+- Verified atomic transaction rollback.
+- Verified Notification persistence.
+- Verified OutboxEvent persistence.
+- Verified API responses.
+
+---
+
+## [0.3.0] - 2026-08-04
 
 ### Added
 
 - FAILED notification lifecycle state.
 - Failure reason persisted for unsuccessful deliveries.
-- Domain behavior for failed delivery (`markAsFailed()`).
-- Flyway migration for `failure_reason`.
+- Domain behavior for failed delivery (markAsFailed()).
+- Flyway migration for failure_reason.
 - Delivery simulation for Email, SMS and Push adapters.
 - End-to-end success and failure verification.
 
@@ -21,8 +59,8 @@ The format is inspired by [Keep a Changelog](https://keepachangelog.com/), and t
 
 - NotificationService now handles successful and failed delivery outcomes.
 - DeliveryResult semantics standardized:
-    - success -> reason = null
-    - failure -> reason contains business explanation
+  - success -> reason = null
+  - failure -> reason contains business explanation
 
 ### Verified
 
@@ -35,8 +73,10 @@ The format is inspired by [Keep a Changelog](https://keepachangelog.com/), and t
 - Resolver behavior
 - Database persistence
 - API responses
-- 
-## [0.2.0] - Delivery Pipeline
+
+---
+
+## [0.2.0] - 2026-08-02
 
 ### Added
 
@@ -47,7 +87,7 @@ The format is inspired by [Keep a Changelog](https://keepachangelog.com/), and t
 - SMS notification adapter
 - Push notification adapter
 - DeliveryResult domain model
-- Notification state transition (`markAsSent()`)
+- Notification state transition (markAsSent())
 - Delivery channel persistence
 - Request validation for delivery channel
 
@@ -72,7 +112,7 @@ The format is inspired by [Keep a Changelog](https://keepachangelog.com/), and t
 
 ---
 
-## [0.1.0] - REST API 
+## [0.1.0] - 2026-07-28
 
 ### Added
 

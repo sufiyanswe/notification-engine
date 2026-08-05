@@ -6,6 +6,8 @@ Notification Engine follows a layered architecture while selectively applying th
 
 The architecture separates HTTP concerns, application use cases, business rules, and infrastructure implementations. Business logic remains independent of external technologies, allowing infrastructure components to evolve without impacting the core application.
 
+Beginning with **Sprint 6**, the application adopts the **Transactional Outbox Pattern**, decoupling notification creation from notification delivery while ensuring reliable persistence.
+
 The primary objectives of this architecture are:
 
 - Clear separation of responsibilities
@@ -14,6 +16,7 @@ The primary objectives of this architecture are:
 - Replaceable infrastructure
 - Extensible integration points
 - Testable business logic
+- Reliable persistence
 - Incremental system evolution
 
 ---
@@ -86,25 +89,37 @@ External integrations are implemented using the Ports and Adapters pattern.
 
 The application depends on abstractions rather than concrete implementations.
 
-For notification delivery:
+Notification creation no longer performs synchronous delivery. Instead, it records work by persisting an `OutboxEvent`.
 
 ```
+HTTP Request
+      │
+      ▼
 NotificationService
-        │
-        ▼
+      │
+      ├── Persist Notification
+      │
+      ├── Persist OutboxEvent
+      │
+      ▼
+COMMIT
+
+────────────────────────
+
+Background Worker (Sprint 7)
+      │
+      ▼
 NotificationChannel
-        │
-        ▼
+      │
+      ▼
 NotificationChannelResolver
-        │
+      │
  ┌──────┼───────────────┐
  ▼      ▼               ▼
 Email   SMS           Push
 ```
 
-Adding a new delivery channel requires implementing the `NotificationChannel` contract.
-
-Existing business logic remains unchanged.
+The `NotificationChannel` abstraction remains the integration point for external providers, but it is now consumed by the background worker instead of `NotificationService`.
 
 ---
 
@@ -113,6 +128,14 @@ Existing business logic remains unchanged.
 Persistence is accessed through repository abstractions.
 
 Application services interact with repositories rather than persistence technologies directly.
+
+---
+
+## Transactional Outbox Pattern
+
+Notification creation persists both the business data (`Notification`) and the integration work (`OutboxEvent`) within a single database transaction.
+
+This guarantees that both records are committed together or rolled back together, eliminating inconsistent states and providing the foundation for reliable asynchronous processing.
 
 ---
 
@@ -152,8 +175,8 @@ Typical responsibilities include:
 
 - Executing use cases
 - Coordinating persistence
-- Delegating external integrations
 - Managing transactional boundaries
+- Creating OutboxEvents
 
 Current package:
 
@@ -255,11 +278,14 @@ Application
 
 Domain
  ├── Notification
+ ├── OutboxEvent
  ├── NotificationStatus
+ ├── OutboxStatus
  ├── NotificationChannelType
- ├── DeliveryResult
+ ├── OutboxEventType
  ├── NotificationChannel
- └── NotificationRepository
+ ├── NotificationRepository
+ └── OutboxRepository
 
 Infrastructure
  ├── NotificationChannelResolver
@@ -267,39 +293,41 @@ Infrastructure
  ├── SmsNotificationChannel
  ├── PushNotificationChannel
  ├── NotificationRepository (Spring Data)
+ ├── OutboxRepository (Spring Data)
  ├── SecurityConfig
  └── ApplicationProperties
 ```
 
 ---
 
-# Notification Lifecycle
+# Notification Processing Flow
 
 ```
-                +---------+
-                | PENDING |
-                +---------+
-                     |
-         +-----------+-----------+
-         |                       |
-         v                       v
-     +--------+             +---------+
-     |  SENT  |             | FAILED  |
-     +--------+             +---------+
-                                  |
-                                  v
-                    failureReason persisted
+HTTP Request
+      │
+      ▼
+NotificationService
+      │
+      ├── Persist Notification
+      │
+      ├── Persist OutboxEvent
+      │
+      ▼
+COMMIT
+      │
+      ▼
+HTTP 201 Created
+
+────────────────────────
 ```
 
-A notification is initially created with the `PENDING` status.
+Notification creation is now independent of external notification providers.
 
-The Application layer coordinates the delivery workflow by selecting the appropriate `NotificationChannel` implementation through the `NotificationChannelResolver`.
+When a notification is created, the application persists both the `Notification` and its corresponding `OutboxEvent` within a single database transaction.
 
-Each delivery adapter returns a `DeliveryResult`, representing either a successful or failed delivery outcome.
+Delivery is performed asynchronously by a background worker that processes pending `OutboxEvent` records.
 
-The `Notification` aggregate owns all valid state transitions. Based on the returned `DeliveryResult`, it transitions from `PENDING` to either `SENT` or `FAILED`. When delivery fails, the aggregate persists the associated failure reason as part of its business state.
-
-Infrastructure adapters remain responsible only for interacting with external providers. Provider-specific exceptions and error responses are translated into business-friendly failure reasons before being returned to the application layer, keeping the domain independent of infrastructure concerns.
+This design implements the **Transactional Outbox Pattern**, ensuring reliable persistence while decoupling HTTP request processing from external delivery providers.
 
 ---
 
@@ -310,6 +338,7 @@ The project currently applies the following engineering principles:
 - Layered Architecture
 - Ports and Adapters (Hexagonal Architecture)
 - Repository Pattern
+- Transactional Outbox Pattern
 - Single Responsibility Principle
 - Open/Closed Principle
 - Dependency Inversion Principle
@@ -328,13 +357,11 @@ The current architecture is intentionally designed to support future capabilitie
 
 Planned areas of evolution include:
 
-- Real Email provider integration
-- SMS gateway integration
-- Push notification provider integration
+- Background Worker
 - Retry mechanism
 - Scheduled delivery
-- Asynchronous processing
-- Outbox Pattern
+- Dead Letter Queue (DLQ)
 - Monitoring and metrics
 - Distributed tracing
+- Kafka integration
 - Event-driven integrations

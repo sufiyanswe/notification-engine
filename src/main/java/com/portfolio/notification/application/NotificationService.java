@@ -1,11 +1,11 @@
 package com.portfolio.notification.application;
 
-import com.portfolio.notification.domain.model.DeliveryResult;
 import com.portfolio.notification.domain.model.Notification;
 import com.portfolio.notification.domain.model.NotificationChannelType;
-import com.portfolio.notification.domain.port.NotificationChannel;
+import com.portfolio.notification.domain.model.OutboxEvent;
+import com.portfolio.notification.domain.model.OutboxEventType;
 import com.portfolio.notification.domain.repository.NotificationRepository;
-import com.portfolio.notification.infrastructure.delivery.NotificationChannelResolver;
+import com.portfolio.notification.domain.repository.OutboxRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,14 +13,14 @@ import org.springframework.transaction.annotation.Transactional;
 public class NotificationService {
 
     private final NotificationRepository notificationRepository;
-    private final NotificationChannelResolver notificationChannelResolver;
+    private final OutboxRepository outboxRepository;
 
     public NotificationService(
             NotificationRepository notificationRepository,
-            NotificationChannelResolver notificationChannelResolver
+            OutboxRepository outboxRepository
     ) {
         this.notificationRepository = notificationRepository;
-        this.notificationChannelResolver = notificationChannelResolver;
+        this.outboxRepository = outboxRepository;
     }
 
     @Transactional
@@ -32,29 +32,24 @@ public class NotificationService {
     ) {
 
         Notification notification =
-                new Notification(
-                        recipientId,
-                        title,
-                        message,
-                        deliveryChannel
+                notificationRepository.save(
+                        new Notification(
+                                recipientId,
+                                title,
+                                message,
+                                deliveryChannel
+                        )
                 );
 
-        notificationRepository.save(notification);
-
-        NotificationChannel channel =
-                notificationChannelResolver.resolve(
-                        notification.getDeliveryChannel()
+        OutboxEvent outboxEvent =
+                new OutboxEvent(
+                        notification.getId(),
+                        OutboxEventType.DELIVER_NOTIFICATION
                 );
 
-        DeliveryResult result =
-                channel.deliver(notification);
+        outboxRepository.save(outboxEvent);
 
-        if (result.successful()) {
-            notification.markAsSent();
-        } else {
-            notification.markAsFailed(result.reason());
-        }
-
+        // TEMPORARY: Force transaction rollback
         return notification;
     }
 }
