@@ -1,7 +1,6 @@
 # ADR-002: Adopt Layered Architecture
 
 - **Status:** Accepted
-- **Date:** 2026-07-22
 
 ---
 

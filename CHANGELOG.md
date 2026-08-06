@@ -6,6 +6,35 @@ The format is based on Keep a Changelog.
 
 ---
 
+## [0.5.0] - 2026-08-06
+
+### Added
+
+- Implemented a background worker for asynchronous notification processing.
+- Added scheduled polling using Spring's `@Scheduled`.
+- Introduced `OutboxProcessor` as the transactional core responsible for processing individual outbox events.
+- Added repository support for retrieving pending outbox events in FIFO order.
+- Added configurable worker polling interval and batch size through application configuration.
+- Added transactional processing with one transaction per outbox event.
+- Added failure isolation so one failed event does not interrupt processing of the remaining batch.
+
+### Changed
+
+- Notification delivery is now fully asynchronous.
+- Delivery responsibility moved from the request lifecycle to the background worker.
+- Introduced explicit outbox lifecycle states:
+  - `PENDING`
+  - `PROCESSING`
+  - `PROCESSED`
+  - `FAILED`
+
+### Verified
+
+- Verified scheduler startup and periodic execution.
+- Verified successful end-to-end notification processing.
+- Verified business failure handling (`DeliveryResult.failure`).
+- Verified transaction rollback on unexpected runtime exceptions.
+- Verified worker resilience by ensuring one failed event does not stop processing of subsequent events.
 ## [0.4.0] - 2026-08-06
 
 ### Added

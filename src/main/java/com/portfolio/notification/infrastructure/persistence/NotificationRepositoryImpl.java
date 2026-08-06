@@ -4,20 +4,29 @@ import com.portfolio.notification.domain.model.Notification;
 import com.portfolio.notification.domain.repository.NotificationRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+import java.util.UUID;
+
+
 @Repository
 public class NotificationRepositoryImpl
         implements NotificationRepository {
 
-    private final SpringDataNotificationRepository repository;
+    private final SpringDataNotificationRepository springDataRepository;
 
     public NotificationRepositoryImpl(
-            SpringDataNotificationRepository repository
+            SpringDataNotificationRepository springDataRepository
     ) {
-        this.repository = repository;
+        this.springDataRepository = springDataRepository;
     }
 
     @Override
     public Notification save(Notification notification) {
-        return repository.save(notification);
+        return springDataRepository.save(notification);
+    }
+
+    @Override
+    public Optional<Notification> findById(UUID id) {
+        return springDataRepository.findById(id);
     }
 }

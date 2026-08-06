@@ -1,6 +1,6 @@
 # ADR-001: Use Spring Security
 
-> **Status:** Accepted
+- **Status:** Accepted
 
 ---
 

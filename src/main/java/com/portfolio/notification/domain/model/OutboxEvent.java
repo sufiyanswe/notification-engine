@@ -7,7 +7,6 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-
 import org.hibernate.annotations.UuidGenerator;
 
 import java.time.Instant;
@@ -43,12 +42,21 @@ public class OutboxEvent {
         // Required by JPA
     }
 
-    public OutboxEvent(UUID notificationId, OutboxEventType eventType) {
+    public OutboxEvent(
+            UUID notificationId,
+            OutboxEventType eventType
+    ) {
+
         if (notificationId == null) {
-            throw new IllegalArgumentException("notificationId must not be null.");
+            throw new IllegalArgumentException(
+                    "notificationId must not be null."
+            );
         }
+
         if (eventType == null) {
-            throw new IllegalArgumentException("eventType must not be null.");
+            throw new IllegalArgumentException(
+                    "eventType must not be null."
+            );
         }
 
         this.notificationId = notificationId;
@@ -85,24 +93,40 @@ public class OutboxEvent {
 
         if (status != OutboxStatus.PENDING) {
             throw new IllegalStateException(
-                    "OutboxEvent can only be marked as PROCESSING from PENDING. Current status: "
+                    "Cannot transition OutboxEvent from "
                             + status
+                            + " to PROCESSING."
             );
         }
 
-        status = OutboxStatus.PROCESSING;
+        this.status = OutboxStatus.PROCESSING;
     }
 
     public void markAsProcessed() {
 
         if (status != OutboxStatus.PROCESSING) {
             throw new IllegalStateException(
-                    "OutboxEvent can only be marked as PROCESSED from PROCESSING. Current status: "
+                    "Cannot transition OutboxEvent from "
                             + status
+                            + " to PROCESSED."
             );
         }
 
-        status = OutboxStatus.PROCESSED;
-        processedAt = Instant.now();
+        this.status = OutboxStatus.PROCESSED;
+        this.processedAt = Instant.now();
+    }
+
+    public void markAsFailed() {
+
+        if (status != OutboxStatus.PROCESSING) {
+            throw new IllegalStateException(
+                    "Cannot transition OutboxEvent from "
+                            + status
+                            + " to FAILED."
+            );
+        }
+
+        this.status = OutboxStatus.FAILED;
+        this.processedAt = Instant.now();
     }
 }

@@ -1,7 +1,6 @@
 # ADR-003: Adopt Ports and Adapters for Notification Delivery
 
 - **Status:** Accepted
-- **Date:** 2026-08-03
 
 ---
 

@@ -1,8 +1,6 @@
 # ADR-006 — Adopt Transactional Outbox Pattern
 
-## Status
-
-Accepted
+- **Status:** Accepted
 
 ## Context
 
