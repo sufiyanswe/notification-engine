@@ -25,7 +25,7 @@ public class OutboxRecoveryWorker {
     }
 
     @Scheduled(
-            fixedDelayString = "${application.worker.poll-interval-ms}"
+            fixedDelayString = "${application.worker.recovery-interval-ms}"
     )
     public void recoverExpiredEvents() {
 

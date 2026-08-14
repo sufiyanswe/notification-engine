@@ -3,6 +3,7 @@ package com.portfolio.notification.application.worker;
 import com.portfolio.notification.application.retry.RetryPolicy;
 import com.portfolio.notification.domain.model.DeliveryResult;
 import com.portfolio.notification.domain.model.Notification;
+import com.portfolio.notification.domain.model.NotificationStatus;
 import com.portfolio.notification.domain.model.OutboxEvent;
 import com.portfolio.notification.domain.port.NotificationChannel;
 import com.portfolio.notification.domain.repository.NotificationRepository;
@@ -44,13 +45,18 @@ public class OutboxProcessor {
         Notification notification =
                 loadNotification(outboxEvent);
 
+        if (notification.getStatus() == NotificationStatus.SENT) {
+            outboxEvent.markAsProcessed();
+            return;
+        }
+
         NotificationChannel channel =
                 notificationChannelResolver.resolve(
                         notification.getDeliveryChannel()
                 );
 
         DeliveryResult result =
-                channel.deliver(notification);
+                channel.deliver(notification, outboxEventId);
 
         if (result.successful()) {
 

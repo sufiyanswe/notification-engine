@@ -92,7 +92,10 @@ class OutboxProcessorTest {
         ).thenReturn(notificationChannel);
 
         when(
-                notificationChannel.deliver(notification)
+                notificationChannel.deliver(
+                        notification,
+                        OUTBOX_EVENT_ID
+                )
         ).thenReturn(result);
 
         processor.process(OUTBOX_EVENT_ID);
@@ -115,7 +118,40 @@ class OutboxProcessorTest {
                 .nextAttemptAt(event, result);
 
         verify(notificationChannel)
-                .deliver(notification);
+                .deliver(
+                        notification,
+                        OUTBOX_EVENT_ID
+                );
+    }
+
+    @Test
+    void shouldMarkOutboxProcessedWithoutRedeliveryWhenNotificationIsAlreadySent() {
+
+        OutboxEvent event = createEvent();
+
+        Notification notification =
+                createNotification();
+
+        notification.markAsSent();
+
+        givenOutboxEvent(event);
+        givenNotification(notification);
+
+        processor.process(OUTBOX_EVENT_ID);
+
+        assertEquals(
+                NotificationStatus.SENT,
+                notification.getStatus()
+        );
+
+        assertEquals(
+                OutboxStatus.PROCESSED,
+                event.getStatus()
+        );
+
+        verifyNoInteractions(notificationChannelResolver);
+        verifyNoInteractions(notificationChannel);
+        verifyNoInteractions(retryPolicy);
     }
 
     @Test
@@ -141,7 +177,10 @@ class OutboxProcessorTest {
         ).thenReturn(notificationChannel);
 
         when(
-                notificationChannel.deliver(notification)
+                notificationChannel.deliver(
+                        notification,
+                        OUTBOX_EVENT_ID
+                )
         ).thenReturn(result);
 
         when(
@@ -211,7 +250,10 @@ class OutboxProcessorTest {
         ).thenReturn(notificationChannel);
 
         when(
-                notificationChannel.deliver(notification)
+                notificationChannel.deliver(
+                        notification,
+                        OUTBOX_EVENT_ID
+                )
         ).thenReturn(result);
 
         when(
@@ -273,7 +315,10 @@ class OutboxProcessorTest {
         ).thenReturn(notificationChannel);
 
         when(
-                notificationChannel.deliver(notification)
+                notificationChannel.deliver(
+                        notification,
+                        OUTBOX_EVENT_ID
+                )
         ).thenReturn(result);
 
         when(

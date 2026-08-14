@@ -6,6 +6,8 @@ import com.portfolio.notification.domain.model.NotificationChannelType;
 import com.portfolio.notification.domain.port.NotificationChannel;
 import org.springframework.stereotype.Component;
 
+import java.util.UUID;
+
 @Component
 public class EmailNotificationChannel implements NotificationChannel {
 
@@ -15,7 +17,7 @@ public class EmailNotificationChannel implements NotificationChannel {
     }
 
     @Override
-    public DeliveryResult deliver(Notification notification) {
+    public DeliveryResult deliver(Notification notification, UUID deliveryId) {
 
         if ("fail@example.com".equals(notification.getRecipientId())) {
             return DeliveryResult.transientFailure(
