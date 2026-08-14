@@ -18,15 +18,11 @@ public class EmailNotificationChannel implements NotificationChannel {
     public DeliveryResult deliver(Notification notification) {
 
         if ("fail@example.com".equals(notification.getRecipientId())) {
-            return new DeliveryResult(
-                    false,
+            return DeliveryResult.transientFailure(
                     "SMTP server unavailable"
             );
         }
 
-        return new DeliveryResult(
-                true,
-                null
-        );
+        return DeliveryResult.success();
     }
 }

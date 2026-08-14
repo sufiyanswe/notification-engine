@@ -80,7 +80,7 @@ Application services should not contain HTTP-specific concerns.
 
 The domain represents the business.
 
-The domain should remain independent from:
+The domain should remain independent of:
 
 - Spring MVC
 - Spring Security

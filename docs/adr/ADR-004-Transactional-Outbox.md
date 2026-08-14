@@ -1,4 +1,4 @@
-# ADR-006 — Adopt Transactional Outbox Pattern
+# ADR-004 — Adopt Transactional Outbox Pattern
 
 - **Status:** Accepted
 

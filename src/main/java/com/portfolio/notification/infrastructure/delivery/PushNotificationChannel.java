@@ -18,15 +18,11 @@ public class PushNotificationChannel implements NotificationChannel {
     public DeliveryResult deliver(Notification notification) {
 
         if ("fail-device".equals(notification.getRecipientId())) {
-            return new DeliveryResult(
-                    false,
+            return DeliveryResult.transientFailure(
                     "Push provider unavailable"
             );
         }
 
-        return new DeliveryResult(
-                true,
-                null
-        );
+        return DeliveryResult.success();
     }
 }

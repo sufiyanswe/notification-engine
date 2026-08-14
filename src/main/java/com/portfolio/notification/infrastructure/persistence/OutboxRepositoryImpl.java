@@ -1,12 +1,10 @@
 package com.portfolio.notification.infrastructure.persistence;
 
 import com.portfolio.notification.domain.model.OutboxEvent;
-import com.portfolio.notification.domain.model.OutboxStatus;
 import com.portfolio.notification.domain.repository.OutboxRepository;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -29,18 +27,28 @@ public class OutboxRepositoryImpl
     }
 
     @Override
-    public List<OutboxEvent> findPending(int limit) {
+    public List<OutboxEvent> findPendingForClaim(
+            int limit,
+            Instant now
+    ) {
 
-        Pageable pageable =
-                PageRequest.of(
-                        0,
-                        limit
+        return springDataRepository
+                .findPendingForClaim(
+                        limit,
+                        now
                 );
+    }
+    @Override
+    public List<OutboxEvent> findExpiredProcessingForRecovery(
+            int limit,
+            Instant now
+    ) {
 
-        return springDataRepository.findByStatusOrderByCreatedAtAsc(
-                OutboxStatus.PENDING,
-                pageable
-        );
+        return springDataRepository
+                .findExpiredProcessingForRecovery(
+                        limit,
+                        now
+                );
     }
 
     @Override

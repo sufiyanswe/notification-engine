@@ -38,6 +38,20 @@ public class OutboxEvent {
     @Column(name = "processed_at")
     private Instant processedAt;
 
+    @Column(name = "retry_count", nullable = false)
+    private int retryCount;
+
+    @Column(name = "next_attempt_at", nullable = false)
+    private Instant nextAttemptAt;
+
+    @Column(name = "lease_until")
+    private Instant leaseUntil;
+
+    @Column(name = "last_failure_reason")
+    private String lastFailureReason;
+
+
+
     protected OutboxEvent() {
         // Required by JPA
     }
@@ -45,6 +59,7 @@ public class OutboxEvent {
     public OutboxEvent(
             UUID notificationId,
             OutboxEventType eventType
+
     ) {
 
         if (notificationId == null) {
@@ -62,7 +77,13 @@ public class OutboxEvent {
         this.notificationId = notificationId;
         this.eventType = eventType;
         this.status = OutboxStatus.PENDING;
-        this.createdAt = Instant.now();
+
+        Instant now = Instant.now();
+        this.createdAt = now;
+        this.retryCount = 0;
+        this.nextAttemptAt = now;
+
+
     }
 
     public UUID getId() {
@@ -89,7 +110,24 @@ public class OutboxEvent {
         return processedAt;
     }
 
-    public void markAsProcessing() {
+    public int getRetryCount() {
+        return retryCount;
+    }
+
+    public Instant getNextAttemptAt() {
+        return nextAttemptAt;
+    }
+
+    public Instant getLeaseUntil() {
+        return leaseUntil;
+    }
+
+    public String getLastFailureReason() {
+        return lastFailureReason;
+    }
+
+
+    public void markAsProcessing(Instant leaseUntil) {
 
         if (status != OutboxStatus.PENDING) {
             throw new IllegalStateException(
@@ -99,7 +137,60 @@ public class OutboxEvent {
             );
         }
 
+        if (leaseUntil == null) {
+            throw new IllegalArgumentException(
+                    "leaseUntil must not be null."
+            );
+        }
+
         this.status = OutboxStatus.PROCESSING;
+        this.leaseUntil = leaseUntil;
+    }
+
+    public void markForRetry(Instant nextAttemptAt, String reason) {
+        if (status != OutboxStatus.PROCESSING) {
+            throw new IllegalStateException(
+                    "Cannot transition OutboxEvent from " + status + " to PENDING for retry."
+            );
+        }
+        if (nextAttemptAt == null) {
+            throw new IllegalArgumentException(
+                    "nextAttemptAt must not be null."
+            );
+        }
+        if (reason == null || reason.isBlank()) {
+            throw new IllegalArgumentException(
+                    "Failure reason must not be null or blank."
+            );
+        }
+        this.status = OutboxStatus.PENDING;
+        this.retryCount++;
+        this.nextAttemptAt = nextAttemptAt;
+        this.lastFailureReason = reason;
+        this.leaseUntil = null;
+
+
+    }
+
+    public void recoverFromExpiredLease(Instant nextAttemptAt) {
+
+        if (status != OutboxStatus.PROCESSING) {
+            throw new IllegalStateException(
+                    "Cannot recover OutboxEvent from "
+                            + status
+                            + "."
+            );
+        }
+
+        if (nextAttemptAt == null) {
+            throw new IllegalArgumentException(
+                    "nextAttemptAt must not be null."
+            );
+        }
+
+        this.status = OutboxStatus.PENDING;
+        this.nextAttemptAt = nextAttemptAt;
+        this.leaseUntil = null;
     }
 
     public void markAsProcessed() {
@@ -114,9 +205,11 @@ public class OutboxEvent {
 
         this.status = OutboxStatus.PROCESSED;
         this.processedAt = Instant.now();
+        this.lastFailureReason = null;
+        this.leaseUntil = null;
     }
 
-    public void markAsFailed() {
+    public void markAsFailed(String reason) {
 
         if (status != OutboxStatus.PROCESSING) {
             throw new IllegalStateException(
@@ -126,7 +219,15 @@ public class OutboxEvent {
             );
         }
 
+        if (reason == null || reason.isBlank()) {
+            throw new IllegalArgumentException(
+                    "Failure reason must not be null or blank."
+            );
+        }
+
         this.status = OutboxStatus.FAILED;
         this.processedAt = Instant.now();
+        this.lastFailureReason = reason;
+        this.leaseUntil = null;
     }
 }

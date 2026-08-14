@@ -18,15 +18,11 @@ public class SmsNotificationChannel implements NotificationChannel {
     public DeliveryResult deliver(Notification notification) {
 
         if ("fail-phone".equals(notification.getRecipientId())) {
-            return new DeliveryResult(
-                    false,
+            return DeliveryResult.transientFailure(
                     "SMS provider unavailable"
             );
         }
 
-        return new DeliveryResult(
-                true,
-                null
-        );
+        return DeliveryResult.success();
     }
 }

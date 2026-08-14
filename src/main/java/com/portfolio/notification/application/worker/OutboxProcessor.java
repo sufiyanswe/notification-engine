@@ -1,5 +1,6 @@
 package com.portfolio.notification.application.worker;
 
+import com.portfolio.notification.application.retry.RetryPolicy;
 import com.portfolio.notification.domain.model.DeliveryResult;
 import com.portfolio.notification.domain.model.Notification;
 import com.portfolio.notification.domain.model.OutboxEvent;
@@ -10,6 +11,8 @@ import com.portfolio.notification.infrastructure.delivery.NotificationChannelRes
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -18,15 +21,18 @@ public class OutboxProcessor {
     private final OutboxRepository outboxRepository;
     private final NotificationRepository notificationRepository;
     private final NotificationChannelResolver notificationChannelResolver;
+    private final RetryPolicy retryPolicy;
 
     public OutboxProcessor(
             OutboxRepository outboxRepository,
             NotificationRepository notificationRepository,
-            NotificationChannelResolver notificationChannelResolver
+            NotificationChannelResolver notificationChannelResolver,
+            RetryPolicy retryPolicy
     ) {
         this.outboxRepository = outboxRepository;
         this.notificationRepository = notificationRepository;
         this.notificationChannelResolver = notificationChannelResolver;
+        this.retryPolicy = retryPolicy;
     }
 
     @Transactional
@@ -37,8 +43,6 @@ public class OutboxProcessor {
 
         Notification notification =
                 loadNotification(outboxEvent);
-
-        outboxEvent.markAsProcessing();
 
         NotificationChannel channel =
                 notificationChannelResolver.resolve(
@@ -51,20 +55,39 @@ public class OutboxProcessor {
         if (result.successful()) {
 
             notification.markAsSent();
-
             outboxEvent.markAsProcessed();
 
-        } else {
+            return;
+        }
 
-            notification.markAsFailed(
+        Optional<Instant> nextAttemptAt =
+                retryPolicy.nextAttemptAt(
+                        outboxEvent,
+                        result
+                );
+
+        if (nextAttemptAt.isPresent()) {
+
+            outboxEvent.markForRetry(
+                    nextAttemptAt.get(),
                     result.reason()
             );
 
-            outboxEvent.markAsFailed();
+            return;
         }
+
+        notification.markAsFailed(
+                result.reason()
+        );
+
+        outboxEvent.markAsFailed(
+                result.reason()
+        );
     }
 
-    private OutboxEvent loadOutboxEvent(UUID outboxEventId) {
+    private OutboxEvent loadOutboxEvent(
+            UUID outboxEventId
+    ) {
 
         return outboxRepository
                 .findById(outboxEventId)

@@ -1,6 +1,7 @@
 package com.portfolio.notification.infrastructure.configuration;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -17,7 +18,10 @@ public record ApplicationProperties(
         String version,
 
         @Valid
-        Worker worker
+        Worker worker,
+
+        @Valid
+        Retry retry
 
 ) {
 
@@ -27,7 +31,27 @@ public record ApplicationProperties(
             int batchSize,
 
             @Min(100)
-            long pollIntervalMs
+            long pollIntervalMs,
+
+            @Min(1)
+            long leaseDurationMs,
+
+            @Min(100)
+            long recoveryIntervalMs
+
+    ) {
+    }
+
+    public record Retry(
+
+            @Min(0)
+            int maxRetries,
+
+            @Min(1)
+            long initialDelayMs,
+
+            @DecimalMin(value = "1.0")
+            double multiplier
 
     ) {
     }

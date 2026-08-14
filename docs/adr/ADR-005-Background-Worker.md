@@ -41,27 +41,30 @@ Each `OutboxEvent` is processed within its own transaction.
 - The current implementation supports a single worker instance.
 - Infrastructure recovery for abandoned `PROCESSING` events is intentionally deferred.
 
-## Deferred Decisions
+## Subsequent Decisions
 
-The following capabilities are intentionally excluded from Sprint 7 and are planned for future iterations:
+The background worker introduced by this ADR was extended in subsequent
+iterations.
 
-- Retry scheduling
-- Lock expiration / lease mechanism
+### Retry Scheduling
+
+Retry scheduling with configurable exponential backoff was introduced
+to handle transient delivery failures.
+
+See [ADR-006: Introduce Retry Scheduling with Exponential Backoff](ADR-006-Retry-and-Exponential-Backoff.md).
+
+### Lease-Based Processing and Recovery
+
+Lease-based processing was introduced to recover events that remain in
+`PROCESSING` after a worker failure or application restart.
+
+See [ADR-007: Introduce Lease-Based Outbox Processing and Recovery](ADR-007-Lease-Based-Outbox-Processing-and-Recovery.md).
+
+## Still Deferred
+
+The following capabilities remain intentionally outside the current
+scope:
+
 - Dead-letter queue
-- Distributed workers
-- Row-level locking
+- Distributed worker coordination
 - Metrics and monitoring
-
-## Alternatives Considered
-
-### Infinite Loop
-
-Rejected because it wastes CPU resources, complicates lifecycle management, and is not idiomatic Spring.
-
-### Message Broker (Kafka / RabbitMQ)
-
-Rejected because introducing external messaging infrastructure was outside the scope of Sprint 7.
-
-### Spring `@Scheduled`
-
-Accepted because it provides a simple, production-proven scheduling mechanism while keeping the architecture easy to understand and extend.
