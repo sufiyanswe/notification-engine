@@ -1,24 +1,28 @@
 
 # Notification Delivery Engine
 
-A production-oriented backend service for reliable notification delivery across multiple delivery channels, built with Spring Boot and PostgreSQL.
+A Java and Spring Boot backend for reliable asynchronous notification processing, built with PostgreSQL.
 
-The system is designed around a set of failure modes that commonly
-affect background delivery systems:
+The project explores how to design and test notification workflows that remain recoverable when workers fail, delivery attempts are retried, or multiple workers process background work concurrently.
 
--   A process crashes after persisting a notification but before
-    delivering it.
--   Multiple workers attempt to process the same work item concurrently.
--   A transient delivery failure requires bounded retries.
--   A worker crashes while holding an in-progress work item.
--   A delivery operation is replayed after recovery.
+## Engineering Focus
 
-The implementation uses a transactional outbox, PostgreSQL row locking,
-lease-based recovery, structured failure classification, and
-configurable exponential backoff to make these failure modes explicit
-and testable.
+- Transactional Outbox Pattern
+- PostgreSQL-based concurrent work claiming with `FOR UPDATE SKIP LOCKED`
+- Lease-based processing and recovery
+- Structured transient/permanent failure classification
+- Configurable retry policies with exponential backoff
+- Spring Data JPA/Hibernate persistence
+- Flyway database migrations
+- Unit and PostgreSQL integration testing with Testcontainers
 
-> **Status:** Active development · **Version:** `0.6.0-SNAPSHOT`
+## Current Status
+
+> **Active development — `0.6.0-SNAPSHOT`**
+
+The reliability foundation is implemented and tested. Request-level idempotency, replay-safe external delivery, live provider integrations, observability, performance testing, CI/CD, and production deployment remain in progress.
+
+This project does **not** claim exactly-once external delivery or production readiness.
 
 ------------------------------------------------------------------------
 
